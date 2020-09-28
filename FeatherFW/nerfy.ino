@@ -68,11 +68,11 @@ bool stepper::step_if_needed()
 //  Serial.println();
 
   // Check if motor is in right place already
-  if((current_velocity < 0.001) && (step_target == current_step_count))
+  if((abs(current_velocity) < 0.001) && (step_target == current_step_count))
     return false;
-  else if((current_velocity < 0.001) && (current_step_count > step_target))
+  else if((abs(current_velocity) < 0.001) && (current_step_count > step_target))
     set_dir(false);
-  else if((current_velocity < 0.001) && (current_step_count < step_target))
+  else if((abs(current_velocity) < 0.001) && (current_step_count < step_target))
     set_dir(true);
   
   if(micros() > next_step_us)
