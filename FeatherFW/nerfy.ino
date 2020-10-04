@@ -39,9 +39,10 @@ void stepper::update_config(float max_vel_new, float max_accel_new, int32_t step
 // Public - Overwrite the current position to be any rad value designated
 void stepper::set_current_rads(double target)
 {
+  target = target == NOVALUE ? 0 : target;
   double working_count = target * steps_per_rev;
   working_count /= (2 * PI);
-  working_count += 0.5; // For the rounding
+  working_count += 0.4999; // For the rounding
   current_step_count = (int32_t) working_count;
 }
 

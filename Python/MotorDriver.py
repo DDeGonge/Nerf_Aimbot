@@ -5,7 +5,7 @@ import os
 import time
 import math
 
-class Scara(object):
+class BottyMcBotFace(object):
     def __init__(self, serial_device):
         self.serial_device = serial_device
         self.x_error = 0.

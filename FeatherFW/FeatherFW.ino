@@ -69,9 +69,12 @@ void loop()
               break;
             }
             case 92: {
-              // This is implemented wrong currently but idc deal with it
-//              gcode_command_floats gcode(args);
-//              bot.zero(gcode.fetch('x'), gcode.fetch('y'));
+              // Overwrite current pos
+              gcode_command_floats gcode(args);
+              if(gcode.com_exists('x'))
+                s0.set_rad_target(gcode.fetch('x'), gcode.fetch('f'));
+              if(gcode.com_exists('y'))
+                s1.set_rad_target(gcode.fetch('y'), gcode.fetch('f'));
               break;
             }
           }
