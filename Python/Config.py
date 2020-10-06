@@ -20,6 +20,7 @@ IMAGE_RESOLUTION = (648,486)
 
 """ OPENCV PARAMETERS """
 TRACK_MODE = cv2.TrackerMOSSE_create
+lock_on_size_px = (25,25)
 
 
 """ FEATHER COMM PARAMETERS """
@@ -31,3 +32,4 @@ Feather_Parameter_Chars = {
 
 """ DEBUG PARAMS """
 DEBUG_MODE = True
+SAVE_ALL_FRAMES = True

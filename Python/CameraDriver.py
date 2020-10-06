@@ -19,6 +19,9 @@ class Camera(object):
         self.cameraProcess = None
         self.resolution = resolution
         self.is_enabled = False
+        self.tracker = cfg.TRACK_MODE
+
+        self.locked_on = False
 
         # pic dump stuff
         self.frame_n = 0
@@ -30,9 +33,11 @@ class Camera(object):
         cv2.imshow("Image", img)
         cv2.waitKey(0)
 
+
     @staticmethod
     def _save_image(img, path):
         scipy.misc.toimage(img, cmin=0.0, cmax=...).save(os.path.join(cfg.saveimg_path, path))
+
 
     def start(self):
         # Video capture parameters
@@ -50,10 +55,51 @@ class Camera(object):
         _ = self.cameraProcess.stdout.read(bytesPerFrame)
         self.is_enabled = True
 
+
     def stop(self):
         self.cameraProcess.terminate() # stop the camera
         cv2.destroyAllWindows()
         self.is_enabled = False
+
+
+    def lock_on(self):
+        (imgw, imgh) = cfg.IMAGE_RESOLUTION
+        (w,h) = cfg.lock_on_size_px
+        h_lower = int(imgh/2) - int(h/2)
+        w_lower = int(imgw/2) - int(w/2)
+
+        target_bbox = [w_lower, h_lower, w, h]
+
+        frame = self.get_frame()
+        self.target_img = frame[h_lower : h_upper, w_lower : w_upper]
+
+        if cfg.DEBUG_MODE:
+            self._save_image(self.target_img, 'lock_on_img.png')
+
+        self.tracker.init(frame, target_bbox)
+        self.locked_on = True
+
+
+    def get_location(self):
+        """ returns (h, w) """
+        if not self.locked_on:
+            raise Exception('Cant track an object if not locked on...duh.')
+
+        frame = self.get_frame()
+        ok, bbox = self.tracker.update(frame)
+
+        if ok:
+            h = bbox[1] + int(bbox[3] / 2)
+            w = bbox[0] + int(bbox[2] / 2)
+
+            if cfg.DEBUG_MODE:
+                print("[{}, {}] - {} fps".format(h, w, ))
+            return (h, w)
+
+        else:
+            print('Tracking error')
+            return (0,0)
+
 
     def get_frame(self):
         self.cameraProcess.stdout.flush()
@@ -63,8 +109,9 @@ class Camera(object):
             print("Error: Camera stream closed unexpectedly")
             break
 
-        if cfg.DEBUG_MODE:
-            self._save_image(frame)
+        if cfg.SAVE_ALL_FRAMES:
+            self._save_image(frame, "{}.jpg".format(self.frame_n))
+            self.frame_n += 1
 
         return frame
 
@@ -73,37 +120,18 @@ class Camera(object):
         frame.shape = (h,w) # set the correct dimensions for the numpy array
         cv2.imshow("skrrt", frame)
 
-    """ Image recognition functions """
-
-    def preprocess_image(self, img):
-        # Greyscale and blur
-        if cfg.DEBUG_MODE:
-            debug_save_img(img, '{}_{}_raw.jpg'.format(self.pic_series, self.pic_type))
-
-        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray,(5,5),0)
-
-        if cfg.DEBUG_MODE:
-            debug_save_img(blur, '{}_{}_blur.jpg'.format(self.pic_series, self.pic_type))
-
-        # Transform image perspective
-        pts1 = np.float32([cfg.p0, cfg.p1, cfg.p2, cfg.p3])
-        pts2 = np.float32([[0,0],[cfg.POST_TRANSFORM_RES[0],0],[0,cfg.POST_TRANSFORM_RES[1]],cfg.POST_TRANSFORM_RES])
-        M = cv2.getPerspectiveTransform(pts1,pts2)
-        blur_crop = cv2.warpPerspective(blur,M,(cfg.POST_TRANSFORM_RES[0],cfg.POST_TRANSFORM_RES[1]))
-        if cfg.DEBUG_MODE:
-            debug_save_img(blur_crop, '{}_{}_transform.jpg'.format(self.pic_series, self.pic_type))
-
-        return blur_crop
-
 
 if __name__=='__main__':
     c = Camera()
     c.start()
     try:
+        print('Camera started')
+        time.sleep(5)
+        c.lock_on()
+        print('Locked on')
+
         while True:
-            f = c.get_frame()
-            c.show_frame(f)
+            h, w = c.get_location()
     
     finally:
         c.stop()
