@@ -34,6 +34,9 @@ class BottyMcBotFace(object):
     def disable(self):
         self.serial_device.command('M84')
 
+    def trigger(self, min_pwm = cfg.trigger_min_pwm, max_pwm = cfg.trigger_max_pwm, time_held_s = cfg.trigger_hold_s):
+        self.serial_device.command('c1 a{} b{} c{}'.format(min_pwm, max_pwm, time_held_s))
+
     def update_defaults(self, vel = None, acc = None):
         if acc == None:
             acc = cfg.default_accel_mmps2
@@ -48,9 +51,8 @@ class BottyMcBotFace(object):
             command += ' F{}'.format(velocity_mmps * 60)
         self.serial_device.command(command)
 
-    def relative_move(self, xtar_mm, ytar_mm, velocity_mmps=None):
-        raise Exception('NOT IMPLEMENTED')
-        # return self.absolute_move(xpos_mm + xtar_mm, ypos_mm + ytar_mm, velocity_mmps)
+    def relative_move(self, xtar_mm = 0, ytar_mm = 0, velocity_mmps = None):
+        self.absolute_move(self.xpos_mm + xtar_mm, self.ypos_mm + ytar_mm, velocity_mmps)
 
     def send_gcode(self, filename):
         with open(os.path.join(cfg.gcode_folder, filename)) as f:
@@ -71,8 +73,10 @@ class BottyMcBotFace(object):
 
     @property
     def xpos_mm(self):
-        raise Exception('NOT IMPLEMENTED')
+        ret = self.serial_device.command('M114')
+        return float(ret.split(',')[0])
 
     @property
     def ypos_mm(self):
-        raise Exception('NOT IMPLEMENTED')
+        ret = self.serial_device.command('M114')
+        return float(ret.split(',')[1])

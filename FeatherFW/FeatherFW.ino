@@ -17,8 +17,8 @@ void loop()
   setLEDColor(200, 0, 0);
   unsigned long startTime_us = micros();
   unsigned long t_elapsed_us;
-  Servo pen_servo;
-  pen_servo.attach(servo_pin);
+  Servo trigger_servo;
+  trigger_servo.attach(servo_pin);
   stepper s0(s0_step, s0_dir, s0_en, false);
   stepper s1(s1_step, s1_dir, s1_en, false);
 
@@ -72,9 +72,9 @@ void loop()
               // Overwrite current pos
               gcode_command_floats gcode(args);
               if(gcode.com_exists('x'))
-                s0.set_rad_target(gcode.fetch('x'), gcode.fetch('f'));
+                s0.set_current_rads(gcode.fetch('x'));
               if(gcode.com_exists('y'))
-                s1.set_rad_target(gcode.fetch('y'), gcode.fetch('f'));
+                s1.set_current_rads(gcode.fetch('y'));
               break;
             }
           }
@@ -103,15 +103,12 @@ void loop()
             }
             case 114: {
               // Get current position
-//              float xpos, ypos;
-//              bot.get_pos(xpos, ypos);
-//              Serial.println("TODO FINISH THIS ONE");
-              break;
-            }
-            case 201: {
-              // Set Acceleration Limits
-//              gcode_command_floats gcode(args);
-//              bot.set_def_speeds(gcode.fetch('a'), gcode.fetch('v'));
+              float xpos = s0.get_current_rads();
+              float ypos = s1.get_current_rads();
+              Serial.print(xpos, 10);
+              Serial.print(",");
+              Serial.print(ypos, 10);
+              Serial.print("\n");
               break;
             }
           }
@@ -122,8 +119,18 @@ void loop()
           {
             case 0: {
               // configure hardware stuff
-//              gcode_command_floats gcode(args);
-//              bot.configure(gcode.fetch('a'), gcode.fetch('b'), gcode.fetch('c'), gcode.fetch('d'), gcode.fetch('e'), gcode.fetch('f'), gcode.fetch('g'), gcode.fetch('h'));
+              gcode_command_floats gcode(args);
+              s0.configure(gcode.fetch('a'), gcode.fetch('c'), gcode.fetch('d'));
+              s1.configure(gcode.fetch('b'), gcode.fetch('c'), gcode.fetch('d'));
+              break;
+            }
+            case 1: {
+              // pull trigger
+              gcode_command_floats gcode(args);
+              trigger_servo.write(gcode.fetch('a'));
+              delay(gcode.fetch('c'));
+              trigger_servo.write(gcode.fetch('b'));
+              delay(200);
               break;
             }
           }

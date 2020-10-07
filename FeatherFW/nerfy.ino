@@ -23,7 +23,7 @@ void stepper::disable()
 }
 
 // Public - Update stepper parameters. Feed NOVALUE to not change any particular parameter
-void stepper::update_config(float max_vel_new, float max_accel_new, int32_t steps_per_rev_new)
+void stepper::update_config(int32_t steps_per_rev_new, float max_vel_new, float max_accel_new)
 {
   if (max_vel_new != NOVALUE)
     max_vel = max_vel_new;

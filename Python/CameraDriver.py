@@ -4,28 +4,28 @@ import sys
 import time
 import os
 import cv2
-import scipy.misc
+from PIL import Image
 import atexit
 import Config as cfg
 import numpy as np
 import subprocess as sp
 
-from picamera.array import PiRGBArray
-from picamera import PiCamera
-from PIL import Image
 
 class Camera(object):
     def __init__(self, resolution=cfg.IMAGE_RESOLUTION):
         self.cameraProcess = None
         self.resolution = resolution
         self.is_enabled = False
-        self.tracker = cfg.TRACK_MODE
 
         self.locked_on = False
+        self.tlast = 0
 
         # pic dump stuff
         self.frame_n = 0
         self.pic_type = ''
+
+
+        self.reset_lock_on()
 
 
     @staticmethod
@@ -35,8 +35,9 @@ class Camera(object):
 
 
     @staticmethod
-    def _save_image(img, path):
-        scipy.misc.toimage(img, cmin=0.0, cmax=...).save(os.path.join(cfg.saveimg_path, path))
+    def _save_image(img, impath):
+        im = Image.fromarray(img)
+        im.save(os.path.join(cfg.saveimg_path, impath))
 
 
     def start(self):
@@ -48,11 +49,11 @@ class Camera(object):
         videoCmd = "raspividyuv -w "+str(w)+" -h "+str(h)+" --output - --timeout 0 --framerate "+str(fps)+" --luma --nopreview"
         videoCmd = videoCmd.split() # Popen requires that each parameter is a separate string
 
-        self.cameraProcess = sp.Popen(videoCmd, stdout=sp.PIPE) # start the camera
-        atexit.register(self.cameraProcess.terminate) # this closes the camera process in case the python scripts exits unexpectedly
+        self.cameraProcess = sp.Popen(videoCmd, stdout=sp.PIPE, bufsize=0) # start the camera
+        # atexit.register(self.cameraProcess.terminate) # this closes the camera process in case the python scripts exits unexpectedly
 
         # discard first frame
-        _ = self.cameraProcess.stdout.read(bytesPerFrame)
+        _ = self.cameraProcess.stdout.read(self.bytesPerFrame)
         self.is_enabled = True
 
 
@@ -62,16 +63,37 @@ class Camera(object):
         self.is_enabled = False
 
 
+    def cv2_start(self):
+        self.cap = cv2.VideoCapture(0)
+
+    def cv2_stop(self):
+        self.cap.release()
+
+    def get_frame(self):
+        _, img = self.cap.read()
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        if cfg.SAVE_ALL_FRAMES:
+            self._save_image(gray, "{}.png".format(self.frame_n))
+            self.frame_n += 1
+
+        return gray
+
+    def reset_lock_on(self):
+        self.tracker = cv2.TrackerMOSSE_create()
+        self.locked_on = False
+
+
     def lock_on(self):
         (imgw, imgh) = cfg.IMAGE_RESOLUTION
         (w,h) = cfg.lock_on_size_px
         h_lower = int(imgh/2) - int(h/2)
         w_lower = int(imgw/2) - int(w/2)
 
-        target_bbox = [w_lower, h_lower, w, h]
+        target_bbox = (w_lower, h_lower, w, h)
 
         frame = self.get_frame()
-        self.target_img = frame[h_lower : h_upper, w_lower : w_upper]
+        self.target_img = frame[h_lower : h_lower + h, w_lower : w_lower + w]
 
         if cfg.DEBUG_MODE:
             self._save_image(self.target_img, 'lock_on_img.png')
@@ -88,12 +110,15 @@ class Camera(object):
         frame = self.get_frame()
         ok, bbox = self.tracker.update(frame)
 
+        tnow = time.time()
+
         if ok:
             h = bbox[1] + int(bbox[3] / 2)
             w = bbox[0] + int(bbox[2] / 2)
 
             if cfg.DEBUG_MODE:
-                print("[{}, {}] - {} fps".format(h, w, ))
+                print("[{}, {}] - {} fps".format(h, w, 1 / (tnow - self.tlast)))
+                self.tlast = tnow
             return (h, w)
 
         else:
@@ -101,19 +126,19 @@ class Camera(object):
             return (0,0)
 
 
-    def get_frame(self):
-        self.cameraProcess.stdout.flush()
-        frame = np.fromfile(self.cameraProcess.stdout, count=self.bytesPerFrame, dtype=np.uint8)
+    # def get_frame(self):
+    #     self.cameraProcess.stdout.flush()
+    #     frame = np.fromfile(self.cameraProcess.stdout, count=self.bytesPerFrame, dtype=np.uint8)
 
-        if frame.size != bytesPerFrame:
-            print("Error: Camera stream closed unexpectedly")
-            break
+    #     if frame.size != bytesPerFrame:
+    #         print("Error: Camera stream closed unexpectedly")
+    #         return
 
-        if cfg.SAVE_ALL_FRAMES:
-            self._save_image(frame, "{}.jpg".format(self.frame_n))
-            self.frame_n += 1
+    #     if cfg.SAVE_ALL_FRAMES:
+    #         self._save_image(frame, "{}.jpg".format(self.frame_n))
+    #         self.frame_n += 1
 
-        return frame
+    #     return frame
 
     def show_frame(self, frame):
         (w,h) = self.resolution
@@ -123,10 +148,12 @@ class Camera(object):
 
 if __name__=='__main__':
     c = Camera()
-    c.start()
+    c.cv2_start()
     try:
         print('Camera started')
-        time.sleep(5)
+        # while True:
+        #     _ = c.get_frame()
+
         c.lock_on()
         print('Locked on')
 
@@ -134,4 +161,4 @@ if __name__=='__main__':
             h, w = c.get_location()
     
     finally:
-        c.stop()
+        c.cv2_stop()

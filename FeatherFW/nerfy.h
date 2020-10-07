@@ -12,7 +12,7 @@ struct stepper
   public:
   void enable();
   void disable();
-  void update_config(float max_vel_new, float max_accel_new, int32_t steps_per_rev_new);
+  void update_config(int32_t steps_per_rev_new, float max_vel_new, float max_accel_new);
   void set_current_rads(double rads);
   void set_rad_target(double target, float feedrate);
   bool step_if_needed();
