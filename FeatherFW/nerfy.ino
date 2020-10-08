@@ -2,12 +2,16 @@
 
 stepper::stepper(int s_pin, int d_pin, int e_pin, bool rev)
 {
+  pinMode(s_pin, OUTPUT);
+  pinMode(d_pin, OUTPUT);
+  pinMode(e_pin, OUTPUT);
   step_pin = s_pin;
   dir_pin = d_pin;
   en_pin = e_pin;
   reverse = rev;
   current_velocity = 0;
   current_step_count = 0;
+  disable();
 }
 
 // Public - enable stepper motor
@@ -62,12 +66,6 @@ bool stepper::step_if_needed()
   int32_t step_target = (steps_per_rev * target_rads);
   step_target /= 2 * PI;
 
-//  Serial.print("now: ");
-//  Serial.print(current_step_count);
-//  Serial.print("\t target: ");
-//  Serial.print(step_target);
-//  Serial.println();
-
   // Check if motor is in right place already
   if((abs(current_velocity) < 0.001) && (step_target == current_step_count))
     return false;
@@ -78,7 +76,6 @@ bool stepper::step_if_needed()
   
   if(micros() > next_step_us)
   {
-//    Serial.println("step");
     take_step();
 
     uint32_t cur_step_us = next_step_us;
@@ -154,18 +151,14 @@ bool stepper::step_if_needed()
 //      Serial.print(next_step_us);
     }
 
-    // Last resort is maintain speed
+    // Last resort is maintain max speed
     else
     {
-//      Serial.print("maintain\t");
-      next_step_us = (2 * next_step_us) - last_step_us;
-//      Serial.print(next_step_us);
+      next_step_us += 1000000 * step_size_rads / max_vel;
     }
 
     // Update current motor velocity
     current_velocity = step_size_rads * 1000000;
-//    Serial.print("\ttdiff ");
-//    Serial.print(diff_exact_us);
     current_velocity /= diff_exact_us;
     current_velocity = current_dir ? current_velocity : -current_velocity;
     current_velocity = abs(current_velocity) < 0.01 ? 0 : current_velocity;

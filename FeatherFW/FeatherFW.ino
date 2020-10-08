@@ -75,6 +75,11 @@ void loop()
                 s0.set_current_rads(gcode.fetch('x'));
               if(gcode.com_exists('y'))
                 s1.set_current_rads(gcode.fetch('y'));
+              if(!gcode.com_exists('x') && !gcode.com_exists('y'))
+              {
+                s0.set_current_rads(0);
+                s1.set_current_rads(0);
+              }
               break;
             }
           }
@@ -90,6 +95,11 @@ void loop()
                 s0.enable();
               if(gcode.com_exists('y'))
                 s1.enable();
+              if(!gcode.com_exists('x') && !gcode.com_exists('y'))
+              {
+                s0.enable();
+                s1.enable();
+              }
               break;
             }
             case 84: {
@@ -99,6 +109,11 @@ void loop()
                 s0.disable();
               if(gcode.com_exists('y'))
                 s1.disable();
+              if(!gcode.com_exists('x') && !gcode.com_exists('y'))
+              {
+                s0.disable();
+                s1.disable();
+              }
               break;
             }
             case 114: {
