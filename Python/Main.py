@@ -1,7 +1,7 @@
 __version__ = '0.1.0'
 
 import time
-import args
+import argparse
 import Config as cfg
 from SerialDevice import *
 from MotorDriver import BottyMcBotFace
@@ -27,6 +27,8 @@ def main():
 
         # Enter operational mode
         while True:
+            if cfg.DEBUG_MODE:
+                print('Starting...')
             bot.absolute_move(cfg.pitch_center_rads, cfg.yaw_center_rads)
             if args.m == 0:
                 standard_mode(bot, c)

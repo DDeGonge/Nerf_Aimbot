@@ -8,10 +8,9 @@ import math
 class BottyMcBotFace(object):
     def __init__(self, serial_device):
         self.serial_device = serial_device
-        self.x_error = 0.
-        self.y_error = 0.
+        self.x_target = 0.
+        self.y_target = 0.
         self.configure()
-        self.update_defaults()
         self.is_parked = False
 
     """ Motion stuff """
@@ -37,22 +36,20 @@ class BottyMcBotFace(object):
     def trigger(self, min_pwm = cfg.trigger_min_pwm, max_pwm = cfg.trigger_max_pwm, time_held_s = cfg.trigger_hold_s):
         self.serial_device.command('c1 a{} b{} c{}'.format(min_pwm, max_pwm, time_held_s))
 
-    def update_defaults(self, vel = None, acc = None):
-        if acc == None:
-            acc = cfg.default_accel_mmps2
-        if vel == None:
-            vel = cfg.default_vel_mmps
-        self.serial_device.command('M201 a{} v{}'.format(acc, vel))
-
     def absolute_move(self, xtar_mm, ytar_mm, velocity_mmps=None):
         # Calculate move
+        self.x_target = xtar_mm
+        self.y_target = ytar_mm
+
         command = 'G0 X{} Y{}'.format(xtar_mm, ytar_mm)
         if velocity_mmps is not None:
             command += ' F{}'.format(velocity_mmps * 60)
         self.serial_device.command(command)
 
     def relative_move(self, xtar_mm = 0, ytar_mm = 0, velocity_mmps = None):
-        self.absolute_move(self.xpos_mm + xtar_mm, self.ypos_mm + ytar_mm, velocity_mmps)
+        self.x_target += xtar_mm
+        self.y_target += ytar_mm
+        self.absolute_move(self.x_target, self.y_target, velocity_mmps)
 
     def send_gcode(self, filename):
         with open(os.path.join(cfg.gcode_folder, filename)) as f:

@@ -85,7 +85,7 @@ bool stepper::step_if_needed()
     double stop_dist_rads = pow(current_velocity, 2) / (max_accel);
     double stop_pos_rads = (current_step_count * 2 * PI) / steps_per_rev;
 
-    Serial.println(stop_pos_rads);
+//    Serial.println(stop_pos_rads);
 //    Serial.print("\t stop_dist_rads: ");
 //    Serial.print(stop_dist_rads);
 //    Serial.print("\t stop_pos_rads: ");

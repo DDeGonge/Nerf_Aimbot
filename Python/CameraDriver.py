@@ -40,33 +40,47 @@ class Camera(object):
         im.save(os.path.join(cfg.saveimg_path, impath))
 
 
+    # def start(self):
+    #     # Video capture parameters
+    #     (w,h) = self.resolution
+    #     self.bytesPerFrame = w * h
+    #     fps = 250 # setting to 250 will request the maximum framerate possible
+
+    #     videoCmd = "raspividyuv -w "+str(w)+" -h "+str(h)+" --output - --timeout 0 --framerate "+str(fps)+" --luma --nopreview"
+    #     videoCmd = videoCmd.split() # Popen requires that each parameter is a separate string
+
+    #     self.cameraProcess = sp.Popen(videoCmd, stdout=sp.PIPE, bufsize=0) # start the camera
+    #     # atexit.register(self.cameraProcess.terminate) # this closes the camera process in case the python scripts exits unexpectedly
+
+    #     # discard first frame
+    #     _ = self.cameraProcess.stdout.read(self.bytesPerFrame)
+    #     self.is_enabled = True
+
+
+    # def stop(self):
+    #     self.cameraProcess.terminate() # stop the camera
+    #     cv2.destroyAllWindows()
+    #     self.is_enabled = False
+
+
+    # def get_frame(self):
+    #     self.cameraProcess.stdout.flush()
+    #     frame = np.fromfile(self.cameraProcess.stdout, count=self.bytesPerFrame, dtype=np.uint8)
+
+    #     if frame.size != bytesPerFrame:
+    #         print("Error: Camera stream closed unexpectedly")
+    #         return
+
+    #     if cfg.SAVE_ALL_FRAMES:
+    #         self._save_image(frame, "{}.jpg".format(self.frame_n))
+    #         self.frame_n += 1
+
+    #     return frame
+
     def start(self):
-        # Video capture parameters
-        (w,h) = self.resolution
-        self.bytesPerFrame = w * h
-        fps = 250 # setting to 250 will request the maximum framerate possible
-
-        videoCmd = "raspividyuv -w "+str(w)+" -h "+str(h)+" --output - --timeout 0 --framerate "+str(fps)+" --luma --nopreview"
-        videoCmd = videoCmd.split() # Popen requires that each parameter is a separate string
-
-        self.cameraProcess = sp.Popen(videoCmd, stdout=sp.PIPE, bufsize=0) # start the camera
-        # atexit.register(self.cameraProcess.terminate) # this closes the camera process in case the python scripts exits unexpectedly
-
-        # discard first frame
-        _ = self.cameraProcess.stdout.read(self.bytesPerFrame)
-        self.is_enabled = True
-
-
-    def stop(self):
-        self.cameraProcess.terminate() # stop the camera
-        cv2.destroyAllWindows()
-        self.is_enabled = False
-
-
-    def cv2_start(self):
         self.cap = cv2.VideoCapture(0)
 
-    def cv2_stop(self):
+    def stop(self):
         self.cap.release()
 
     def get_frame(self):
@@ -74,13 +88,13 @@ class Camera(object):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         if cfg.SAVE_ALL_FRAMES:
-            self._save_image(gray, "{}.png".format(self.frame_n))
+            self._save_image(gray, "{}.jpg".format(self.frame_n))
             self.frame_n += 1
 
         return gray
 
     def reset_lock_on(self):
-        self.tracker = cv2.TrackerMOSSE_create()
+        self.tracker = cv2.TrackerKCF_create()
         self.locked_on = False
 
 
@@ -126,20 +140,6 @@ class Camera(object):
             return (0,0)
 
 
-    # def get_frame(self):
-    #     self.cameraProcess.stdout.flush()
-    #     frame = np.fromfile(self.cameraProcess.stdout, count=self.bytesPerFrame, dtype=np.uint8)
-
-    #     if frame.size != bytesPerFrame:
-    #         print("Error: Camera stream closed unexpectedly")
-    #         return
-
-    #     if cfg.SAVE_ALL_FRAMES:
-    #         self._save_image(frame, "{}.jpg".format(self.frame_n))
-    #         self.frame_n += 1
-
-    #     return frame
-
     def show_frame(self, frame):
         (w,h) = self.resolution
         frame.shape = (h,w) # set the correct dimensions for the numpy array
@@ -148,7 +148,7 @@ class Camera(object):
 
 if __name__=='__main__':
     c = Camera()
-    c.cv2_start()
+    c.start()
     try:
         print('Camera started')
         # while True:
@@ -161,4 +161,4 @@ if __name__=='__main__':
             h, w = c.get_location()
     
     finally:
-        c.cv2_stop()
+        c.stop()

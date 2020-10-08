@@ -12,8 +12,8 @@ yaw_travel_rads = 1
 pitch_center_rads = 0.5
 yaw_center_rads = 0.5
 
-half_press_index = 0
-full_press_index = 1
+half_press_index = 2
+full_press_index = 3
 
 trigger_min_pwm = 40
 trigger_max_pwm = 120

@@ -120,8 +120,8 @@ void loop()
             case 0: {
               // configure hardware stuff
               gcode_command_floats gcode(args);
-              s0.configure(gcode.fetch('a'), gcode.fetch('c'), gcode.fetch('d'));
-              s1.configure(gcode.fetch('b'), gcode.fetch('c'), gcode.fetch('d'));
+              s0.update_config(gcode.fetch('a'), gcode.fetch('c'), gcode.fetch('d'));
+              s1.update_config(gcode.fetch('b'), gcode.fetch('c'), gcode.fetch('d'));
               break;
             }
             case 1: {
