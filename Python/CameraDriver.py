@@ -24,8 +24,9 @@ class Camera(object):
         self.frame_n = 0
         self.pic_type = ''
 
-
+        # Setup stuff
         self.reset_lock_on()
+        self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 
     @staticmethod
@@ -98,12 +99,13 @@ class Camera(object):
         self.locked_on = False
 
 
-    def lock_on(self):
-        (imgw, imgh) = cfg.IMAGE_RESOLUTION
+    def lock_on(self, target_bbox = None):
+        (imgw, imgh) = cfg.laser_center
         (w,h) = cfg.lock_on_size_px
-        h_lower = int(imgh/2) - int(h/2)
-        w_lower = int(imgw/2) - int(w/2)
+        h_lower = imgh - int(h/2)
+        w_lower = imgw - int(w/2)
 
+        if target_bbox is None:
         target_bbox = (w_lower, h_lower, w, h)
 
         frame = self.get_frame()
@@ -138,6 +140,19 @@ class Camera(object):
         else:
             print('Tracking error')
             return (0,0)
+
+    def find_face(self):
+        frame = self.get_frame()
+        faces = self.face_cascade.detectMultiScale(frame, 1.1, 4)
+
+        tnow = time.time()
+        if cfg.DEBUG_MODE:
+            print("Face Detection - {} fps".format(1 / (tnow - self.tlast)))
+            self.tlast = tnow
+
+        if len(faces) > 0:
+            return faces[0]
+        return None
 
 
     def show_frame(self, frame):

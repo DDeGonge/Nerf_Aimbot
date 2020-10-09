@@ -30,6 +30,7 @@ saveimg_path = '/home/pi/imgs'
 
 """ CAMERA PARAMETERS """
 IMAGE_RESOLUTION = (640,480)
+laser_center = (320,240)
 pixels_to_rads = 0.002
 
 

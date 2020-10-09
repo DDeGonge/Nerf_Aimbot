@@ -24,9 +24,7 @@ def standard_mode(bot, c, loser_mode=False):
     # Start tracking center frame
     c.lock_on()
 
-    w_center_pix, h_center_pix = cfg.IMAGE_RESOLUTION
-    w_center_pix = int(w_center_pix / 2)
-    h_center_pix = int(h_center_pix / 2)
+    w_center_pix, h_center_pix = cfg.laser_center
 
     # Stay in this tracking until trigger is released or shot is fired
     while half_button.is_held:
@@ -52,10 +50,50 @@ def standard_mode(bot, c, loser_mode=False):
                 sleep(cfg.loser_mode_delay_s)
 
             bot.trigger()
-            c.reset_lock_on()
-            return
+            break
+
+    c.reset_lock_on()
 
 
 def face_mode(bot, c):
     """ Will aim and fire at first face it sees as long as trigger is held """
-    print('TODO')
+    # Wait for button to be released if it started being held
+    while half_button.is_held or full_button.is_held:
+        if cfg.DEBUG_MODE:
+            print('BUTTON HELD AT START OF NEW MODE LOOP')
+            sleep(0.2)
+        pass
+
+    # Wait unti half press is first triggered
+    while not full_button.is_pressed:
+        if cfg.DEBUG_MODE:
+            print('WAITING FOR TRIGGER FULL PRESS')
+            sleep(0.2)
+        pass
+
+    w_center_pix, h_center_pix = cfg.laser_center
+
+    while full_button.is_held:
+        face_location = c.find_face()
+
+        if face_location is None:
+            continue
+
+        c.lock_on(face_location)
+
+        w, h, _, _ = face_location
+        while full_button.is_held and (abs(h - h_center_pix) > 10 or abs(w - w_center_pix) > 10):
+            if cfg.DEBUG_MODE:
+                print('h_err: {}\tw_err: {}'.format(h - h_center_pix, w - w_center_pix))
+
+            h, w = c.get_location()
+            if h != 0 and w != 0:
+                x_move = (w - w_center_pix) * cfg.pixels_to_rads
+                y_move = (h - h_center_pix) * cfg.pixels_to_rads
+                bot.relative_move(x_move, y_move)
+
+        if full_button.is_held:
+            bot.trigger()
+            break
+
+    c.reset_lock_on()
