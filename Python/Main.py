@@ -39,6 +39,8 @@ def main():
 
                 
     except Exception as e:
+        c.stop()
+        bot.disable()
         raise e
 
     finally:

@@ -29,13 +29,13 @@ saveimg_path = '/home/pi/imgs'
 
 
 """ CAMERA PARAMETERS """
-IMAGE_RESOLUTION = (640,480)
+video_resolution = (640,480)
 laser_center = (320,240)
 pixels_to_rads = 0.002
 
 
 """ OPENCV PARAMETERS """
-TRACK_MODE = "mosse"
+tracking_mode = "mosse"  # NOT IMPLEMENTED
 lock_on_size_px = (50,50)
 
 
@@ -50,4 +50,3 @@ Feather_Parameter_Chars = {
 
 """ DEBUG PARAMS """
 DEBUG_MODE = True
-SAVE_ALL_FRAMES = True

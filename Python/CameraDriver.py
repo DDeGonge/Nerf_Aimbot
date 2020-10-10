@@ -12,7 +12,7 @@ import subprocess as sp
 
 
 class Camera(object):
-    def __init__(self, resolution=cfg.IMAGE_RESOLUTION):
+    def __init__(self, resolution=cfg.video_resolution):
         self.cameraProcess = None
         self.resolution = resolution
         self.is_enabled = False
@@ -72,7 +72,7 @@ class Camera(object):
     #         print("Error: Camera stream closed unexpectedly")
     #         return
 
-    #     if cfg.SAVE_ALL_FRAMES:
+    #     if cfg.DEBUG_MODE:
     #         self._save_image(frame, "{}.jpg".format(self.frame_n))
     #         self.frame_n += 1
 
@@ -81,16 +81,24 @@ class Camera(object):
     def start(self):
         self.cap = cv2.VideoCapture(0)
 
+        # Set resolution
+        w, h = self.resolution
+        cap.set(3,w)
+        cap.set(4,h)
+
+        if cfg.DEBUG_MODE:
+            self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, self.resolution)
+
     def stop(self):
         self.cap.release()
+        self.debug_vid.release()
 
     def get_frame(self):
         _, img = self.cap.read()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        if cfg.SAVE_ALL_FRAMES:
-            self._save_image(gray, "{}.jpg".format(self.frame_n))
-            self.frame_n += 1
+        if cfg.DEBUG_MODE:
+            self.debug_vid.write(gray)
 
         return gray
 
