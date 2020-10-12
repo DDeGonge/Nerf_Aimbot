@@ -13,6 +13,8 @@ class BottyMcBotFace(object):
         self.configure()
         self.is_parked = False
 
+        self.trigger_start = None
+
     """ Motion stuff """
 
     def configure(self):
@@ -34,7 +36,16 @@ class BottyMcBotFace(object):
         self.serial_device.command('M84')
 
     def trigger(self, min_pwm = cfg.trigger_min_pwm, max_pwm = cfg.trigger_max_pwm, time_held_s = cfg.trigger_hold_s):
-        self.serial_device.command('c1 a{} b{} c{}'.format(min_pwm, max_pwm, time_held_s))
+        """ Call this function continuously and do other stuff while it runs, will return true when it is done """
+        if self.trigger_start is None:
+            self.trigger_start = time.time()
+            self.serial_device.command('c1 a{}'.format(min_pwm))
+        elif (time.time() - self.trigger_start) > time_held_s:
+            self.trigger_start = None
+            self.serial_device.command('c1 a{}'.format(max_pwm))
+            return True
+
+        return False
 
     def absolute_move(self, xtar_mm, ytar_mm, velocity_mmps=None):
         # Calculate move

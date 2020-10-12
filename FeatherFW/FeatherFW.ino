@@ -140,12 +140,9 @@ void loop()
               break;
             }
             case 1: {
-              // pull trigger
+              // set trigger angle
               gcode_command_floats gcode(args);
               trigger_servo.write(gcode.fetch('a'));
-              delay(gcode.fetch('c'));
-              trigger_servo.write(gcode.fetch('b'));
-              delay(200);
               break;
             }
           }

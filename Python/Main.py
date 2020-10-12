@@ -22,8 +22,8 @@ def main():
         bot = BottyMcBotFace(sd)
 
         # Enable bot and move to center
-        bot.zero()
         bot.enable()
+        bot.zero()
 
         # Enter operational mode
         while True:

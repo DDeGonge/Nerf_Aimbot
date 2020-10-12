@@ -25,12 +25,13 @@ def standard_mode(bot, c, loser_mode=False):
     c.lock_on()
 
     w_center_pix, h_center_pix = cfg.laser_center
+    loser_loop = False
 
     # Stay in this tracking until trigger is released or shot is fired
     while half_button.is_held:
         h, w = c.get_location()
 
-        if h != 0 and w != 0:
+        if h != 0 and w != 0 and loser_loop == False:
             x_move = (w - w_center_pix) * cfg.pixels_to_rads
             y_move = (h - h_center_pix) * cfg.pixels_to_rads
             bot.relative_move(x_move, y_move)
@@ -38,19 +39,20 @@ def standard_mode(bot, c, loser_mode=False):
         if cfg.DEBUG_MODE:
             print('TARGET: {}, {}'.format(x_move, y_move))
 
-        if full_button.is_pressed:
+        if full_button.is_held:
             if cfg.DEBUG_MODE:
-                    print('TRIGGER FULLY PRESSED')
+                print('Pulling Trigger')
 
             # It's fine don't look at this
             if loser_mode:
+                loser_loop = True
                 if cfg.DEBUG_MODE:
                     print('Executing Loser Mode')
                 bot.relative_move(cfg.loser_mode_bump_rads)
                 sleep(cfg.loser_mode_delay_s)
 
-            bot.trigger()
-            break
+            if bot.trigger() == True:
+                break
 
     c.reset_lock_on()
 
@@ -82,7 +84,7 @@ def face_mode(bot, c):
         c.lock_on(face_location)
 
         w, h, _, _ = face_location
-        while full_button.is_held and (abs(h - h_center_pix) > 10 or abs(w - w_center_pix) > 10):
+        while True:
             if cfg.DEBUG_MODE:
                 print('h_err: {}\tw_err: {}'.format(h - h_center_pix, w - w_center_pix))
 
@@ -92,8 +94,10 @@ def face_mode(bot, c):
                 y_move = (h - h_center_pix) * cfg.pixels_to_rads
                 bot.relative_move(x_move, y_move)
 
-        if full_button.is_held:
-            bot.trigger()
-            break
+            if full_button.is_held and abs(h - h_center_pix) < 10 and abs(w - w_center_pix) < 10:
+                if cfg.DEBUG_MODE:
+                    print('Pulling Trigger')
+                if bot.trigger() == True:
+                    break
 
     c.reset_lock_on()

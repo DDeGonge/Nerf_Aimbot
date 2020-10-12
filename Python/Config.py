@@ -7,10 +7,10 @@ s1_step_per_rev = 27106
 default_vel_radps = 10
 default_accel_radps2 = 100
 
-pitch_travel_rads = 1
-yaw_travel_rads = 1
-pitch_center_rads = 0.5
-yaw_center_rads = 0.5
+pitch_travel_rads = 4.2
+yaw_travel_rads = 10
+pitch_center_rads = 1.8
+yaw_center_rads = 5
 
 half_press_index = 2
 full_press_index = 3
