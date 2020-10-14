@@ -12,10 +12,13 @@ class BottyMcBotFace(object):
         self.serial_device = serial_device
         self.yaw_target = 0.
         self.pitch_target = 0.
-        self.configure_feather()
-        self.is_parked = False
-
+        self.yaw_vel = 0.
+        self.pitch_vel = 0.
         self.trigger_start = 0
+        self.is_parked = False
+        
+
+        self.configure_feather()
         self.set_pid_tuning(cfg.track_kp, cfg.track_ki, cfg.track_kd)
 
     """ Motion stuff """
