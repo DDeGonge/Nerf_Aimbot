@@ -29,6 +29,8 @@ saveimg_path = '/home/pi/imgs'
 loser_mode_bump_rads = 0.1
 loser_mode_delay_s = 0.1
 
+face_mode_close_enough_pixels = 10
+
 
 """ CAMERA PARAMETERS """
 video_resolution = (640,480)
@@ -42,7 +44,6 @@ track_ki = 2
 track_kd = 10
 lock_on_size_px = (50,50)
 
-vel_lowpass_filter = 0.8
 lead_ahead_constant = 10  # pixels lead per rad/s velocity
 
 

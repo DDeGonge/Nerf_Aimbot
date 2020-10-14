@@ -33,7 +33,6 @@ def standard_mode(bot, c, loser_mode=False):
         pass
 
     # Start tracking center frame
-    # laser.off()
     c.lock_on()
     bot.reset_pid()
 
@@ -70,8 +69,8 @@ def standard_mode(bot, c, loser_mode=False):
             print('checkpoint')
 
     bot.trigger(force_off=True)
+    laser.off()
     
-
 
 def face_mode(bot, c):
     """ Will aim and fire at first face it sees as long as trigger is held """
@@ -101,24 +100,22 @@ def face_mode(bot, c):
         if face_location is None:
             continue
 
-        laser.off()
-
         c.lock_on(face_location)
+        bot.reset_pid()
 
         w, h, _, _ = face_location
         while True:
-            if cfg.DEBUG_MODE:
-                print('h_err: {}\tw_err: {}'.format(h - h_center_pix, w - w_center_pix))
-
             h, w = c.get_location()
             if h != 0 and w != 0:
-                bot.update_target(h - h_center_pix, w_center_pix - w)
+                pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w)
+                if cfg.DEBUG_MODE:
+                    print('PID: {}, {}'.format(pitch_pid, yaw_pid))
 
-            if full_button.is_held and abs(h - h_center_pix) < 10 and abs(w - w_center_pix) < 10:
+            if full_button.is_held and abs(h - h_center_pix) < cfg.face_mode_close_enough_pixels and abs(w - w_center_pix) < cfg.face_mode_close_enough_pixels:
                 if cfg.DEBUG_MODE:
                     print('Pulling Trigger')
                 if bot.trigger() == True:
                     break
 
     bot.trigger(force_off=True)
-    c.reset_lock_on()
+    laser.off()
