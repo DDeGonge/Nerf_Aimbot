@@ -25,7 +25,7 @@ class Camera(object):
         self.pic_type = ''
 
         # Setup stuff
-        self.reset_lock_on()
+        self.tracker = cv2.TrackerKCF_create()
         self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 
@@ -41,68 +41,41 @@ class Camera(object):
         im.save(os.path.join(cfg.saveimg_path, impath))
 
 
-    # def start(self):
-    #     # Video capture parameters
-    #     (w,h) = self.resolution
-    #     self.bytesPerFrame = w * h
-    #     fps = 250 # setting to 250 will request the maximum framerate possible
-
-    #     videoCmd = "raspividyuv -w "+str(w)+" -h "+str(h)+" --output - --timeout 0 --framerate "+str(fps)+" --luma --nopreview"
-    #     videoCmd = videoCmd.split() # Popen requires that each parameter is a separate string
-
-    #     self.cameraProcess = sp.Popen(videoCmd, stdout=sp.PIPE, bufsize=0) # start the camera
-    #     # atexit.register(self.cameraProcess.terminate) # this closes the camera process in case the python scripts exits unexpectedly
-
-    #     # discard first frame
-    #     _ = self.cameraProcess.stdout.read(self.bytesPerFrame)
-    #     self.is_enabled = True
-
-
-    # def stop(self):
-    #     self.cameraProcess.terminate() # stop the camera
-    #     cv2.destroyAllWindows()
-    #     self.is_enabled = False
-
-
-    # def get_frame(self):
-    #     self.cameraProcess.stdout.flush()
-    #     frame = np.fromfile(self.cameraProcess.stdout, count=self.bytesPerFrame, dtype=np.uint8)
-
-    #     if frame.size != bytesPerFrame:
-    #         print("Error: Camera stream closed unexpectedly")
-    #         return
-
-    #     if cfg.DEBUG_MODE:
-    #         self._save_image(frame, "{}.jpg".format(self.frame_n))
-    #         self.frame_n += 1
-
-    #     return frame
-
     def start(self):
         self.cap = cv2.VideoCapture(0)
 
         # Set resolution
         w, h = self.resolution
-        cap.set(3,w)
-        cap.set(4,h)
+        self.cap.set(3,w)
+        self.cap.set(4,h)
 
         if cfg.DEBUG_MODE:
             self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, self.resolution)
+
 
     def stop(self):
         self.cap.release()
         self.debug_vid.release()
 
+
     def get_frame(self):
         _, img = self.cap.read()
+        img[:,:,2] = np.zeros([img.shape[0], img.shape[1]])  # Remove red channel so maybe laser can stay on
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        r_gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         if cfg.DEBUG_MODE:
-            self.debug_vid.write(gray)
+            self.debug_vid.write(r_gray)
 
-        return gray
+        if cfg.SAVE_FRAMES:
+            self._save_image(r_gray, '{}.jpg'.format(self.frame_n))
+            self.frame_n += 1
+
+        return r_gray
+
 
     def reset_lock_on(self):
+        self.tracker.clear()
         self.tracker = cv2.TrackerKCF_create()
         self.locked_on = False
 
@@ -114,14 +87,15 @@ class Camera(object):
         w_lower = imgw - int(w/2)
 
         if target_bbox is None:
-        target_bbox = (w_lower, h_lower, w, h)
+            target_bbox = (w_lower, h_lower, w, h)
 
         frame = self.get_frame()
         self.target_img = frame[h_lower : h_lower + h, w_lower : w_lower + w]
 
         if cfg.DEBUG_MODE:
-            self._save_image(self.target_img, 'lock_on_img.png')
+            self._save_image(self.target_img, 'lock_on_img.jpg')
 
+        self.reset_lock_on()
         self.tracker.init(frame, target_bbox)
         self.locked_on = True
 
@@ -148,6 +122,7 @@ class Camera(object):
         else:
             print('Tracking error')
             return (0,0)
+
 
     def find_face(self):
         frame = self.get_frame()

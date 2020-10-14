@@ -1,23 +1,26 @@
 __version__ = '0.1.0'
 
 import Config as cfg
+from simple_pid import PID
 import os
 import time
 import math
 
+
 class BottyMcBotFace(object):
     def __init__(self, serial_device):
         self.serial_device = serial_device
-        self.x_target = 0.
-        self.y_target = 0.
-        self.configure()
+        self.yaw_target = 0.
+        self.pitch_target = 0.
+        self.configure_feather()
         self.is_parked = False
 
-        self.trigger_start = None
+        self.trigger_start = 0
+        self.set_pid_tuning(cfg.track_kp, cfg.track_ki, cfg.track_kd)
 
     """ Motion stuff """
 
-    def configure(self):
+    def configure_feather(self):
         command_string = 'C0'
         for k, v in cfg.Feather_Parameter_Chars.items():
             command_string += ' {}{}'.format(k, v)
@@ -35,32 +38,66 @@ class BottyMcBotFace(object):
     def disable(self):
         self.serial_device.command('M84')
 
-    def trigger(self, min_pwm = cfg.trigger_min_pwm, max_pwm = cfg.trigger_max_pwm, time_held_s = cfg.trigger_hold_s):
+    def trigger(self, min_pwm = cfg.trigger_min_pwm, max_pwm = cfg.trigger_max_pwm, time_held_s = cfg.trigger_hold_s, force_off = False):
         """ Call this function continuously and do other stuff while it runs, will return true when it is done """
-        if self.trigger_start is None:
+        if self.trigger_start == 0 and force_off is False:
             self.trigger_start = time.time()
-            self.serial_device.command('c1 a{}'.format(min_pwm))
-        elif (time.time() - self.trigger_start) > time_held_s:
-            self.trigger_start = None
             self.serial_device.command('c1 a{}'.format(max_pwm))
+        elif ((time.time() - self.trigger_start) > time_held_s) or force_off is True:
+            self.trigger_start = 0
+            self.serial_device.command('c1 a{}'.format(min_pwm))
             return True
 
         return False
 
-    def absolute_move(self, xtar_mm, ytar_mm, velocity_mmps=None):
-        # Calculate move
-        self.x_target = xtar_mm
-        self.y_target = ytar_mm
+    def set_pid_tuning(self, kp, ki, kd):
+        self.pitch_pid = PID(kp / 1000000, ki / 1000000, kd / 1000000)
+        self.yaw_pid = PID(kp / 1000000, ki / 1000000, kd / 1000000)
 
-        command = 'G0 X{} Y{}'.format(xtar_mm, ytar_mm)
+    def reset_pid(self):
+        self.pitch_pid.reset()
+        self.yaw_pid.reset()
+
+    def absolute_move(self, yaw_rads, pitch_rads, velocity_mmps=None):
+        """ I move da motorz """
+
+        # Filter commands if exceeding limits
+        if yaw_rads > cfg.yaw_travel_rads:
+            self.yaw_target = cfg.yaw_travel_rads
+        elif yaw_rads < 0:
+            self.yaw_target = 0
+        else:
+            self.yaw_target = yaw_rads
+
+        if pitch_rads > cfg.pitch_travel_rads:
+            self.pitch_target = cfg.pitch_travel_rads
+        elif yaw_rads < 0:
+            self.pitch_target = 0
+        else:
+            self.pitch_target = pitch_rads
+
+        # Send gcode
+        command = 'G0 X{} Y{}'.format(self.yaw_target, self.pitch_target)
         if velocity_mmps is not None:
             command += ' F{}'.format(velocity_mmps * 60)
         self.serial_device.command(command)
 
-    def relative_move(self, xtar_mm = 0, ytar_mm = 0, velocity_mmps = None):
-        self.x_target += xtar_mm
-        self.y_target += ytar_mm
-        self.absolute_move(self.x_target, self.y_target, velocity_mmps)
+    def relative_move(self, yaw_rads = 0, pitch_rads = 0, velocity_mmps = None):
+        self.yaw_target += yaw_rads
+        self.pitch_target += pitch_rads
+        self.absolute_move(self.yaw_target, self.pitch_target, velocity_mmps)
+
+    def update_target(self, pitch_pixel_err, yaw_pixel_err):
+        """ Feed in pitch and yaw target to PID loop """
+        pitch_move_rads = self.pitch_pid(pitch_pixel_err)
+        yaw_move_rads = self.yaw_pid(yaw_pixel_err)
+        self.relative_move(yaw_move_rads, pitch_move_rads)
+
+        if cfg.DEBUG_MODE:
+            print('PITCH components: {}'.format(self.pitch_pid.components))
+            print('YAW components: {}'.format(self.yaw_pid.components))
+
+        return pitch_move_rads, yaw_move_rads
 
     def send_gcode(self, filename):
         with open(os.path.join(cfg.gcode_folder, filename)) as f:

@@ -4,16 +4,17 @@ s1_step_per_rev = 27106
 
 # default_vel_mmps = 800.0
 # default_accel_mmps2 = 40000.0
-default_vel_radps = 10
-default_accel_radps2 = 100
+default_vel_radps = 4
+default_accel_radps2 = 40
 
-pitch_travel_rads = 4.2
-yaw_travel_rads = 10
-pitch_center_rads = 1.8
-yaw_center_rads = 5
+pitch_travel_rads = 0.5
+yaw_travel_rads = 1.2
+pitch_center_rads = 0.21
+yaw_center_rads = 0.59
 
-half_press_index = 2
-full_press_index = 3
+half_press_index = 14
+full_press_index = 15
+laser_index = 17
 
 trigger_min_pwm = 40
 trigger_max_pwm = 120
@@ -30,8 +31,10 @@ saveimg_path = '/home/pi/imgs'
 
 """ CAMERA PARAMETERS """
 video_resolution = (640,480)
-laser_center = (320,240)
-pixels_to_rads = 0.002
+laser_center = (264,305)
+track_kp = 500
+track_ki = 2
+track_kd = 10
 
 
 """ OPENCV PARAMETERS """
@@ -50,3 +53,4 @@ Feather_Parameter_Chars = {
 
 """ DEBUG PARAMS """
 DEBUG_MODE = True
+SAVE_FRAMES = True

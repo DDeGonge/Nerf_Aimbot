@@ -8,7 +8,7 @@ import time
 VIDPID = '239A:8022'
 BAUD = 250000
 S_TIMEOUT = 0.2   # Serial command timeout
-R_TIMEOUT = 60  # Wait for reponse timeout
+R_TIMEOUT = 10  # Wait for reponse timeout
 
 class SerialDevice(object):
     def __init__(self):
