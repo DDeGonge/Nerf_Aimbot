@@ -120,9 +120,9 @@ void loop()
               // Get current position
               float xpos = s0.get_current_rads();
               float ypos = s1.get_current_rads();
-              Serial.print(xpos, 10);
+              Serial.print(xpos, 4);
               Serial.print(",");
-              Serial.print(ypos, 10);
+              Serial.print(ypos, 4);
               Serial.print("\n");
               break;
             }
@@ -143,6 +143,16 @@ void loop()
               // set trigger angle
               gcode_command_floats gcode(args);
               trigger_servo.write(gcode.fetch('a'));
+              break;
+            }
+            case 2: {
+              // Get current velocities
+              float xvel = s0.get_current_vel();
+              float yvel = s1.get_current_vel();
+              Serial.print(xvel, 4);
+              Serial.print(",");
+              Serial.print(yvel, 4);
+              Serial.print("\n");
               break;
             }
           }

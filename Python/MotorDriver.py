@@ -91,9 +91,17 @@ class BottyMcBotFace(object):
         self.absolute_move(self.yaw_target, self.pitch_target, velocity_mmps)
 
     def update_target(self, pitch_pixel_err, yaw_pixel_err):
-        """ Feed in pitch and yaw target to PID loop """
+        """ Takes in raw pixel errors and determines and sends motor commands """
+        # First calculate motor leads
+        self.get_velocities()
+        pitch_pixel_err += self.pitch_vel * cfg.lead_ahead_constant
+        yaw_pixel_err += self.yaw_vel * cfg.lead_ahead_constant
+
+        # Then run through pid with adjusted pixel targets
         pitch_move_rads = self.pitch_pid(pitch_pixel_err)
         yaw_move_rads = self.yaw_pid(yaw_pixel_err)
+
+        # Then command motors
         self.relative_move(yaw_move_rads, pitch_move_rads)
 
         if cfg.DEBUG_MODE:
@@ -101,6 +109,11 @@ class BottyMcBotFace(object):
             print('YAW components: {}'.format(self.yaw_pid.components))
 
         return pitch_move_rads, yaw_move_rads
+
+    def get_velocities(self):
+        """ Updates pitch and yaw motor velocities """
+        ret = self.serial_device.command('C2')
+        (self.yaw_vel, self.pitch_vel) = (float(k) for k in ret.split(','))
 
     def send_gcode(self, filename):
         with open(os.path.join(cfg.gcode_folder, filename)) as f:

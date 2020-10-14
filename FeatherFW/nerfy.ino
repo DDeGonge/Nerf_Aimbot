@@ -92,7 +92,6 @@ bool stepper::step_if_needed()
     // This mess determines if we need to slow down
     if((current_dir && ((stop_pos_rads + stop_dist_rads) > target_rads)) || (!current_dir && ((stop_pos_rads - stop_dist_rads) < target_rads)))
     {
-//      Serial.print("slow\t");
       // First check if we are coming to a stop
       if((pow(current_velocity, 2) - 2 * max_accel * step_size_rads) < 0)
       {
@@ -119,36 +118,23 @@ bool stepper::step_if_needed()
       {
         double t0, t1;
         quad_solve(t0, t1, -max_accel, current_velocity, step_size_rads);
-//        Serial.print("\t t0: ");
-//        Serial.print(1000000 * t0);
-//        Serial.print("\t t1: ");
-//        Serial.print(1000000 * t1);
         double next_step_temp = 1000000 * min(t0, t1);
         diff_exact_us = next_step_temp;
         next_step_us = (uint32_t) (next_step_temp + 0.5);
         next_step_us += cur_step_us;
-//        Serial.print("\t");
-//        Serial.print(next_step_us);
       }
     }
 
     // Otherwise check if we can speed up
     else if(abs(current_velocity) < max_vel)
     {
-//      Serial.print("speed\t");
       // Quadratic has 2 roots, only use one that results in positive time
       double t0, t1;
       quad_solve(t0, t1, max_accel, current_velocity, step_size_rads);
-//      Serial.print("\t t0: ");
-//      Serial.print(1000000 * t0);
-//      Serial.print("\t t1: ");
-//      Serial.print(1000000 * t1);
       double next_step_temp = 1000000 * max(t0, t1);
       diff_exact_us = next_step_temp;
       next_step_us = (uint32_t) (next_step_temp + 0.5);
       next_step_us += cur_step_us;
-//      Serial.print("\t");
-//      Serial.print(next_step_us);
     }
 
     // Last resort is maintain max speed
@@ -163,10 +149,6 @@ bool stepper::step_if_needed()
     current_velocity = current_dir ? current_velocity : -current_velocity;
     current_velocity = abs(current_velocity) < 0.01 ? 0 : current_velocity;
     last_step_us = cur_step_us;
-
-//    Serial.print("\t");
-//    Serial.print(current_velocity);
-//    Serial.println();
   }
   return true;
 }
@@ -175,6 +157,12 @@ bool stepper::step_if_needed()
 double stepper::get_current_rads()
 {
   return 2 * PI * current_step_count / steps_per_rev;
+}
+
+// Public - Return current velocity in rads/sec
+double stepper::get_current_vel()
+{
+  return current_velocity;
 }
 
 // Private - Set stepper direction pin

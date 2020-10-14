@@ -17,6 +17,7 @@ struct stepper
   void set_rad_target(double target, float feedrate);
   bool step_if_needed();
   double get_current_rads();
+  double get_current_vel();
 
   private:
   // Configuration

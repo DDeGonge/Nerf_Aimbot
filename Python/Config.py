@@ -42,6 +42,9 @@ track_ki = 2
 track_kd = 10
 lock_on_size_px = (50,50)
 
+vel_lowpass_filter = 0.8
+lead_ahead_constant = 10  # pixels lead per rad/s velocity
+
 
 """ FEATHER COMM PARAMETERS """
 # Chars used for setting parameters on feather. All vars here must be int
@@ -51,6 +54,7 @@ Feather_Parameter_Chars = {
     'c': default_vel_radps,
     'd': default_accel_radps2
 }
+
 
 """ DEBUG PARAMS """
 DEBUG_MODE = True
