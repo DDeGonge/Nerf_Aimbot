@@ -2,8 +2,8 @@ from gpiozero import Button, LED
 from time import sleep
 import Config as cfg
 
-half_button = Button(cfg.half_press_index)
-full_button = Button(cfg.full_press_index)
+half_button = Button(cfg.half_press_index, hold_time=0.05)
+full_button = Button(cfg.full_press_index, hold_time=0.05)
 laser = LED(cfg.laser_index)
 
 def standard_mode(bot, c, loser_mode=False):
@@ -51,6 +51,9 @@ def standard_mode(bot, c, loser_mode=False):
             if cfg.DEBUG_MODE:
                 print('PID: {}, {}'.format(pitch_pid, yaw_pid))
 
+        else:
+            bot.reset_pid()  # Reset control loops on tracking error to avoid jump on re-acquisition
+
         if full_button.is_held:
             if cfg.DEBUG_MODE:
                 print('Pulling Trigger')
@@ -77,24 +80,27 @@ def face_mode(bot, c):
     bot.trigger(force_off=True)
 
     # Wait for button to be released if it started being held
-    while half_button.is_held or full_button.is_held:
-        if cfg.DEBUG_MODE:
-            print('BUTTON HELD AT START OF NEW MODE LOOP')
-            sleep(0.2)
-        pass
+    half_button.wait_for_release()
+    full_button.wait_for_release()
+    # while half_button.is_pressed or full_button.is_pressed:
+    #     if cfg.DEBUG_MODE:
+    #         print('BUTTON HELD AT START OF NEW MODE LOOP')
+    #         sleep(0.2)
+    #     pass
 
     laser.on()
 
     # Wait unti half press is first triggered
-    while not full_button.is_held:
-        if cfg.DEBUG_MODE:
-            print('WAITING FOR TRIGGER FULL PRESS')
-            sleep(0.2)
-        pass
+    half_button.wait_for_press()
+    # while not full_button.is_pressed:
+    #     if cfg.DEBUG_MODE:
+    #         print('WAITING FOR TRIGGER FULL PRESS')
+    #         sleep(0.2)
+    #     pass
 
     w_center_pix, h_center_pix = cfg.laser_center
 
-    while full_button.is_held:
+    while full_button.is_pressed:
         face_location = c.find_face()
 
         if face_location is None:
@@ -104,14 +110,14 @@ def face_mode(bot, c):
         bot.reset_pid()
 
         w, h, _, _ = face_location
-        while True:
+        while full_button.is_pressed:
             h, w = c.get_location()
             if h != 0 and w != 0:
                 pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w)
                 if cfg.DEBUG_MODE:
                     print('PID: {}, {}'.format(pitch_pid, yaw_pid))
 
-            if full_button.is_held and abs(h - h_center_pix) < cfg.face_mode_close_enough_pixels and abs(w - w_center_pix) < cfg.face_mode_close_enough_pixels:
+            if abs(h - h_center_pix) < cfg.face_mode_close_enough_pixels and abs(w - w_center_pix) < cfg.face_mode_close_enough_pixels:
                 if cfg.DEBUG_MODE:
                     print('Pulling Trigger')
                 if bot.trigger() == True:

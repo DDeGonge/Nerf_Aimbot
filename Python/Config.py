@@ -40,11 +40,11 @@ laser_center = (264,305)
 """ OPENCV PARAMETERS """
 tracking_mode = "mosse"  # NOT IMPLEMENTED
 track_kp = 500
-track_ki = 2
-track_kd = 10
-lock_on_size_px = (50,50)
+track_ki = 1
+track_kd = 5
+lock_on_size_px = (40,40)
 
-lead_ahead_constant = 10  # pixels lead per rad/s velocity
+lead_ahead_constant = 10  # pixels lead multiplier. Guess and check fam
 
 
 """ FEATHER COMM PARAMETERS """

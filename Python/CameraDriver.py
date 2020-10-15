@@ -50,12 +50,14 @@ class Camera(object):
         self.cap.set(4,h)
 
         if cfg.DEBUG_MODE:
-            self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, self.resolution)
+            self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, (h, w))
+            self.track_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'track_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, (h, w))
 
 
     def stop(self):
         self.cap.release()
         self.debug_vid.release()
+        self.track_vid.release()
 
 
     def get_frame(self):
@@ -68,8 +70,8 @@ class Camera(object):
             self.debug_vid.write(r_gray)
 
         if cfg.SAVE_FRAMES:
-            self._save_image(r_gray, '{}.jpg'.format(self.frame_n))
             self.frame_n += 1
+            self._save_image(r_gray, '{}.jpg'.format(self.frame_n))
 
         return r_gray
 
@@ -114,13 +116,23 @@ class Camera(object):
             h = bbox[1] + int(bbox[3] / 2)
             w = bbox[0] + int(bbox[2] / 2)
 
+            (a, b, c, d) = (int(j) for j in bbox)
+            frame = cv2.rectangle(frame, (a, b), (a + c, b + d), (0, 255,0), 2)
+
             if cfg.DEBUG_MODE:
                 print("[{}, {}] - {} fps".format(h, w, 1 / (tnow - self.tlast)))
                 self.tlast = tnow
+                self.track_vid.write(frame)
+
+            if cfg.SAVE_FRAMES:
+                self._save_image(frame, 'cv_{}.jpg'.format(self.frame_n))
+
             return (h, w)
 
         else:
             print('Tracking error')
+            if cfg.DEBUG_MODE:
+                self.track_vid.write(frame)
             return (0,0)
 
 

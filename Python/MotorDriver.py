@@ -79,6 +79,8 @@ class BottyMcBotFace(object):
         else:
             self.pitch_target = pitch_rads
 
+        print(self.yaw_target, self.pitch_target)
+
         # Send gcode
         command = 'G0 X{} Y{}'.format(self.yaw_target, self.pitch_target)
         if velocity_mmps is not None:
@@ -105,8 +107,8 @@ class BottyMcBotFace(object):
         self.relative_move(yaw_move_rads, pitch_move_rads)
 
         if cfg.DEBUG_MODE:
-            print('PITCH components: {}'.format(self.pitch_pid.components))
-            print('YAW components: {}'.format(self.yaw_pid.components))
+            print('PITCH components: {}\tLEAD: {}'.format(self.pitch_pid.components, cfg.lead_ahead_constant))
+            print('YAW components: {}\tLEAD: {}'.format(self.yaw_pid.components, cfg.lead_ahead_constant))
 
         return pitch_move_rads, yaw_move_rads
 
