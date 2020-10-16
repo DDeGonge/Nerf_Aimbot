@@ -26,7 +26,7 @@ gcode_folder = 'gcode'
 audio_path = 'audio'
 saveimg_path = '/home/pi/imgs'
 
-loser_mode_bump_rads = 0.01
+loser_mode_bump_pixels = 20
 loser_mode_delay_s = 0.5
 
 face_mode_close_enough_pixels = 10

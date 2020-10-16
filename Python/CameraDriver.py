@@ -51,15 +51,9 @@ class Camera(object):
         # self.cap.set(cv2.CAP_PROP_EXPOSURE, 40)
         # self.cap.set(cv2.CAP_PROP_FPS, 40)
 
-        if cfg.DEBUG_MODE:
-            self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, (h, w))
-            self.track_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'track_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, (h, w))
-
 
     def stop(self):
         self.cap.release()
-        self.debug_vid.release()
-        self.track_vid.release()
 
 
     def get_frame(self):
@@ -67,9 +61,6 @@ class Camera(object):
         img[:,:,2] = np.zeros([img.shape[0], img.shape[1]])  # Remove red channel so laser can stay on
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         r_gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-        if cfg.DEBUG_MODE:
-            self.debug_vid.write(r_gray)
 
         if cfg.SAVE_FRAMES:
             self.frame_n += 1
@@ -85,13 +76,15 @@ class Camera(object):
 
 
     def lock_on(self, target_bbox = None):
-        (imgw, imgh) = cfg.laser_center
-        (w,h) = cfg.lock_on_size_px
-        h_lower = imgh - int(h/2)
-        w_lower = imgw - int(w/2)
-
         if target_bbox is None:
+            (imgw, imgh) = cfg.laser_center
+            (w,h) = cfg.lock_on_size_px
+            h_lower = imgh - int(h/2)
+            w_lower = imgw - int(w/2)
             target_bbox = (w_lower, h_lower, w, h)
+
+        else:
+            (w_lower, h_lower, w, h) = target_bbox
 
         frame = self.get_frame()
         self.target_img = frame[h_lower : h_lower + h, w_lower : w_lower + w]
@@ -119,12 +112,11 @@ class Camera(object):
             w = bbox[0] + int(bbox[2] / 2)
 
             (a, b, c, d) = (int(j) for j in bbox)
-            frame = cv2.rectangle(frame, (a, b), (a + c, b + d), (0, 255,0), 2)
+            frame = cv2.rectangle(frame, (a, b), (a + c, b + d), (0, 0, 0), 2)
 
             if cfg.DEBUG_MODE:
                 print("[{}, {}] - {} fps".format(h, w, 1 / (tnow - self.tlast)))
                 self.tlast = tnow
-                self.track_vid.write(frame)
 
             if cfg.SAVE_FRAMES:
                 self._save_image(frame, 'cv_{}.jpg'.format(self.frame_n))
@@ -133,8 +125,6 @@ class Camera(object):
 
         else:
             print('Tracking error')
-            if cfg.DEBUG_MODE:
-                self.track_vid.write(frame)
             if cfg.SAVE_FRAMES:
                 self._save_image(frame, 'cv_{}.jpg'.format(self.frame_n))
             return (0,0)

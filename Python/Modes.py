@@ -1,5 +1,5 @@
 from gpiozero import Button, LED
-from time import sleep
+import time
 import Config as cfg
 
 half_button = Button(cfg.half_press_index, hold_time=0.05)
@@ -20,7 +20,7 @@ def standard_mode(bot, c, loser_mode=False):
     while half_button.is_held or full_button.is_held:
         if cfg.DEBUG_MODE:
             print('BUTTON HELD AT START OF NEW MODE LOOP')
-            sleep(0.1)
+            time.sleep(0.1)
         pass
 
     laser.on()
@@ -29,7 +29,7 @@ def standard_mode(bot, c, loser_mode=False):
     while not half_button.is_held:
         if cfg.DEBUG_MODE:
             print('WAITING FOR TRIGGER HALF PRESS')
-            sleep(0.1)
+            time.sleep(0.1)
         pass
 
     # Start tracking center frame
@@ -49,10 +49,12 @@ def standard_mode(bot, c, loser_mode=False):
         
         pid_mult = (time.time() - lock_on_time) / 1.0
         pid_mult = pid_mult if pid_mult < 1.0 else 1.0
+        print(pid_mult)
 
         if h != 0 and w != 0 and loser_loop == False:
             pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w, pid_mult)  # Yes this is correct, deal wit it
-
+        elif h != 0 and w != 0 and loser_loop == True:
+            pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w, pid_mult + cfg.loser_mode_bump_pixels)
         else:
             bot.reset_pid()  # Reset control loops on tracking error to avoid jump on re-acquisition
 
@@ -68,12 +70,6 @@ def standard_mode(bot, c, loser_mode=False):
                 loser_loop = True
                 if cfg.DEBUG_MODE:
                     print('Executing Loser Mode')
-                bot.relative_move(cfg.loser_mode_bump_rads)
-                sleep(cfg.loser_mode_delay_s)
-
-            
-
-            print('checkpoint')
 
     bot.trigger(force_off=True)
     laser.off()
@@ -87,7 +83,7 @@ def face_mode(bot, c):
     while half_button.is_pressed or full_button.is_pressed:
         if cfg.DEBUG_MODE:
             print('BUTTON HELD AT START OF NEW MODE LOOP')
-            sleep(0.2)
+            time.sleep(0.2)
         pass
 
     laser.on()
@@ -97,7 +93,7 @@ def face_mode(bot, c):
     while not full_button.is_pressed:
         if cfg.DEBUG_MODE:
             print('WAITING FOR TRIGGER FULL PRESS')
-            sleep(0.2)
+            time.sleep(0.2)
         pass
 
     w_center_pix, h_center_pix = cfg.laser_center
