@@ -74,12 +74,10 @@ class BottyMcBotFace(object):
 
         if pitch_rads > cfg.pitch_travel_rads:
             self.pitch_target = cfg.pitch_travel_rads
-        elif yaw_rads < 0:
+        elif pitch_rads < 0:
             self.pitch_target = 0
         else:
             self.pitch_target = pitch_rads
-
-        print(self.yaw_target, self.pitch_target)
 
         # Send gcode
         command = 'G0 X{} Y{}'.format(self.yaw_target, self.pitch_target)
