@@ -107,8 +107,8 @@ class BottyMcBotFace(object):
         self.relative_move(yaw_move_rads, pitch_move_rads)
 
         if cfg.DEBUG_MODE:
-            print('PITCH components: {}\tLEAD: {}'.format(self.pitch_pid.components, cfg.lead_ahead_constant))
-            print('YAW components: {}\tLEAD: {}'.format(self.yaw_pid.components, cfg.lead_ahead_constant))
+            print('PITCH: {}\tcomponents: {}\tlead: {}'.format(pitch_move_rads, self.pitch_pid.components, self.pitch_vel * cfg.lead_ahead_constant))
+            print('YAW: {}\tcomponents: {}\tlead: {}'.format(yaw_move_rads, self.yaw_pid.components, self.yaw_vel * cfg.lead_ahead_constant))
 
         return pitch_move_rads, yaw_move_rads
 

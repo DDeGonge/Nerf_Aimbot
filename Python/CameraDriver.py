@@ -48,6 +48,8 @@ class Camera(object):
         w, h = self.resolution
         self.cap.set(3,w)
         self.cap.set(4,h)
+        # self.cap.set(cv2.CAP_PROP_EXPOSURE, 40)
+        # self.cap.set(cv2.CAP_PROP_FPS, 40)
 
         if cfg.DEBUG_MODE:
             self.debug_vid = cv2.VideoWriter(os.path.join(cfg.saveimg_path, 'debug_vid.avi'),cv2.VideoWriter_fourcc(*'DIVX'), 30, (h, w))
@@ -62,7 +64,7 @@ class Camera(object):
 
     def get_frame(self):
         _, img = self.cap.read()
-        img[:,:,2] = np.zeros([img.shape[0], img.shape[1]])  # Remove red channel so maybe laser can stay on
+        img[:,:,2] = np.zeros([img.shape[0], img.shape[1]])  # Remove red channel so laser can stay on
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         r_gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
@@ -133,6 +135,8 @@ class Camera(object):
             print('Tracking error')
             if cfg.DEBUG_MODE:
                 self.track_vid.write(frame)
+            if cfg.SAVE_FRAMES:
+                self._save_image(frame, 'cv_{}.jpg'.format(self.frame_n))
             return (0,0)
 
 
@@ -146,7 +150,8 @@ class Camera(object):
             self.tlast = tnow
 
         if len(faces) > 0:
-            return faces[0]
+            [a, b, c, d] = faces[0]
+            return (a, b, c, d)
         return None
 
 

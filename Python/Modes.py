@@ -11,10 +11,10 @@ def standard_mode(bot, c, loser_mode=False):
     bot.trigger(force_off=True)
 
     # TODO Remove dis only for tuning
-    str_in = input("new tunings: ")
-    if str_in != "":
-        kp,ki,kd = str_in.split(',')
-        bot.set_pid_tuning(float(kp), float(ki), float(kd))
+    # str_in = input("new tunings: ")
+    # if str_in != "":
+    #     kp,ki,kd = str_in.split(',')
+    #     bot.set_pid_tuning(float(kp), float(ki), float(kd))
 
     # Wait for button to be released if it started being held
     while half_button.is_held or full_button.is_held:
@@ -48,8 +48,6 @@ def standard_mode(bot, c, loser_mode=False):
 
         if h != 0 and w != 0 and loser_loop == False:
             pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w)  # Yes this is correct, deal wit it
-            if cfg.DEBUG_MODE:
-                print('PID: {}, {}'.format(pitch_pid, yaw_pid))
 
         else:
             bot.reset_pid()  # Reset control loops on tracking error to avoid jump on re-acquisition
@@ -57,6 +55,9 @@ def standard_mode(bot, c, loser_mode=False):
         if full_button.is_held:
             if cfg.DEBUG_MODE:
                 print('Pulling Trigger')
+                
+            if bot.trigger() == True:
+                break
 
             # It's fine don't look at this
             if loser_mode:
@@ -66,8 +67,7 @@ def standard_mode(bot, c, loser_mode=False):
                 bot.relative_move(cfg.loser_mode_bump_rads)
                 sleep(cfg.loser_mode_delay_s)
 
-            if bot.trigger() == True:
-                break
+            
 
             print('checkpoint')
 
@@ -80,23 +80,21 @@ def face_mode(bot, c):
     bot.trigger(force_off=True)
 
     # Wait for button to be released if it started being held
-    half_button.wait_for_release()
-    full_button.wait_for_release()
-    # while half_button.is_pressed or full_button.is_pressed:
-    #     if cfg.DEBUG_MODE:
-    #         print('BUTTON HELD AT START OF NEW MODE LOOP')
-    #         sleep(0.2)
-    #     pass
+    while half_button.is_pressed or full_button.is_pressed:
+        if cfg.DEBUG_MODE:
+            print('BUTTON HELD AT START OF NEW MODE LOOP')
+            sleep(0.2)
+        pass
 
     laser.on()
 
     # Wait unti half press is first triggered
     half_button.wait_for_press()
-    # while not full_button.is_pressed:
-    #     if cfg.DEBUG_MODE:
-    #         print('WAITING FOR TRIGGER FULL PRESS')
-    #         sleep(0.2)
-    #     pass
+    while not full_button.is_pressed:
+        if cfg.DEBUG_MODE:
+            print('WAITING FOR TRIGGER FULL PRESS')
+            sleep(0.2)
+        pass
 
     w_center_pix, h_center_pix = cfg.laser_center
 
@@ -108,6 +106,8 @@ def face_mode(bot, c):
 
         c.lock_on(face_location)
         bot.reset_pid()
+        if cfg.DEBUG_MODE:
+            print('FACE locked on')
 
         w, h, _, _ = face_location
         while full_button.is_pressed:
