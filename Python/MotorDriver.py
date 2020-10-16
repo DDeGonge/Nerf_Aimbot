@@ -90,7 +90,7 @@ class BottyMcBotFace(object):
         self.pitch_target += pitch_rads
         self.absolute_move(self.yaw_target, self.pitch_target, velocity_mmps)
 
-    def update_target(self, pitch_pixel_err, yaw_pixel_err):
+    def update_target(self, pitch_pixel_err, yaw_pixel_err, mult=1.0):
         """ Takes in raw pixel errors and determines and sends motor commands """
         # First calculate motor leads
         self.get_velocities()
@@ -98,8 +98,8 @@ class BottyMcBotFace(object):
         yaw_pixel_err += self.yaw_vel * cfg.lead_ahead_constant
 
         # Then run through pid with adjusted pixel targets
-        pitch_move_rads = self.pitch_pid(pitch_pixel_err)
-        yaw_move_rads = self.yaw_pid(yaw_pixel_err)
+        pitch_move_rads = self.pitch_pid(pitch_pixel_err) * mult
+        yaw_move_rads = self.yaw_pid(yaw_pixel_err) * mult
 
         # Then command motors
         self.relative_move(yaw_move_rads, pitch_move_rads)
