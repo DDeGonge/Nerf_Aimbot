@@ -142,7 +142,7 @@ class Camera(object):
 
     def find_face(self):
         frame = self.get_frame()
-        faces = self.face_cascade.detectMultiScale(frame, 1.1, 4)
+        faces = self.face_cascade.detectMultiScale(frame, 1.2, 6)
 
         tnow = time.time()
         if cfg.DEBUG_MODE:
