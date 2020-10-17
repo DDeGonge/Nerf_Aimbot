@@ -61,6 +61,7 @@ class Camera(object):
         img[:,:,2] = np.zeros([img.shape[0], img.shape[1]])  # Remove red channel so laser can stay on
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         r_gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        # rblur_gray = cv2.GaussianBlur(r_gray, (21, 21), 0)
 
         if cfg.SAVE_FRAMES:
             self.frame_n += 1

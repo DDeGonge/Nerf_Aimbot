@@ -47,8 +47,8 @@ def standard_mode(bot, c, loser_mode=False):
     while half_button.is_held:
         h, w = c.get_location()
         
-        pid_mult = (time.time() - lock_on_time) / 1.0
-        pid_mult = pid_mult if pid_mult < 1.0 else 1.0
+        pid_mult = (time.time() - lock_on_time) / cfg.aim_lock_fade_s
+        pid_mult = pid_mult if pid_mult < cfg.aim_lock_fade_s else cfg.aim_lock_fade_s
         print(pid_mult)
 
         if h != 0 and w != 0 and loser_loop == False:
@@ -57,6 +57,7 @@ def standard_mode(bot, c, loser_mode=False):
             pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w, pid_mult + cfg.loser_mode_bump_pixels)
         else:
             bot.reset_pid()  # Reset control loops on tracking error to avoid jump on re-acquisition
+            lock_on_time = time.time()
 
         if full_button.is_held:
             if cfg.DEBUG_MODE:

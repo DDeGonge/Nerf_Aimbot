@@ -31,6 +31,8 @@ loser_mode_delay_s = 0.5
 
 face_mode_close_enough_pixels = 10
 
+aim_lock_fade_s = 0.5  # Soft lock on and fade into full tracking
+
 
 """ CAMERA PARAMETERS """
 video_resolution = (640,480)
@@ -39,12 +41,12 @@ laser_center = (269,305)
 
 """ OPENCV PARAMETERS """
 tracking_mode = "mosse"  # NOT IMPLEMENTED
-track_kp = 700
-track_ki = 500
-track_kd = 0
+track_kp = 1500
+track_ki = 350
+track_kd = 5
 lock_on_size_px = (40,40)
 
-lead_ahead_constant = 30  # pixels lead multiplier. Guess and check fam
+lead_ahead_constant = 15  # pixels lead multiplier. Guess and check fam
 
 
 """ FEATHER COMM PARAMETERS """
