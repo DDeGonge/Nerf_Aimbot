@@ -10,12 +10,6 @@ def standard_mode(bot, c, loser_mode=False):
     """ Half press trigger to lock on and track. Full press to fire """
     bot.trigger(force_off=True)
 
-    # TODO Remove dis only for tuning
-    # str_in = input("new tunings: ")
-    # if str_in != "":
-    #     kp,ki,kd = str_in.split(',')
-    #     bot.set_pid_tuning(float(kp), float(ki), float(kd))
-
     # Wait for button to be released if it started being held
     while half_button.is_held or full_button.is_held:
         if cfg.DEBUG_MODE:
@@ -41,6 +35,7 @@ def standard_mode(bot, c, loser_mode=False):
 
     w_center_pix, h_center_pix = cfg.laser_center
     loser_loop = False
+    normal_loop = False
     lock_on_time = time.time()
 
     # Stay in this tracking until trigger is released or shot is fired
@@ -51,15 +46,18 @@ def standard_mode(bot, c, loser_mode=False):
         pid_mult = pid_mult if pid_mult < cfg.aim_lock_fade_s else cfg.aim_lock_fade_s
         print(pid_mult)
 
-        if h != 0 and w != 0 and loser_loop == False:
+        if h != 0 and w != 0 and loser_loop == False and normal_loop == False:
             pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w, pid_mult)  # Yes this is correct, deal wit it
         elif h != 0 and w != 0 and loser_loop == True:
-            pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w, pid_mult + cfg.loser_mode_bump_pixels)
+            pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w - cfg.loser_mode_bump_pixels)
+        elif h != 0 and w != 0 and normal_loop == True:
+            pitch_pid, yaw_pid = bot.update_target(h - h_center_pix - cfg.normal_mode_vertical_bump, w_center_pix - w - cfg.normal_mode_horiz_bump)
         else:
             bot.reset_pid()  # Reset control loops on tracking error to avoid jump on re-acquisition
             lock_on_time = time.time()
 
         if full_button.is_held:
+            laser.off()
             if cfg.DEBUG_MODE:
                 print('Pulling Trigger')
                 
@@ -71,6 +69,8 @@ def standard_mode(bot, c, loser_mode=False):
                 loser_loop = True
                 if cfg.DEBUG_MODE:
                     print('Executing Loser Mode')
+            else:
+                normal_loop = True
 
     bot.trigger(force_off=True)
     laser.off()
@@ -110,11 +110,10 @@ def face_mode(bot, c):
         if cfg.DEBUG_MODE:
             print('FACE locked on')
 
-        w, h, _, _ = face_location
         while full_button.is_pressed:
             h, w = c.get_location()
             if h != 0 and w != 0:
-                pitch_pid, yaw_pid = bot.update_target(h - h_center_pix, w_center_pix - w)
+                pitch_pid, yaw_pid = bot.update_target(h - h_center_pix + cfg.normal_mode_vertical_bump, w_center_pix - w + cfg.normal_mode_horiz_bump)
                 if cfg.DEBUG_MODE:
                     print('PID: {}, {}'.format(pitch_pid, yaw_pid))
 

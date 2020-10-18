@@ -29,6 +29,9 @@ saveimg_path = '/home/pi/imgs'
 loser_mode_bump_pixels = 20
 loser_mode_delay_s = 0.5
 
+normal_mode_vertical_bump = 8
+normal_mode_horiz_bump = 0
+
 face_mode_close_enough_pixels = 10
 
 aim_lock_fade_s = 0.5  # Soft lock on and fade into full tracking
@@ -47,6 +50,11 @@ track_kd = 5
 lock_on_size_px = (40,40)
 
 lead_ahead_constant = 15  # pixels lead multiplier. Guess and check fam
+
+# Tuning for face finder only
+# track_kp = 500
+# track_ki = 200
+# track_kd = 2
 
 
 """ FEATHER COMM PARAMETERS """

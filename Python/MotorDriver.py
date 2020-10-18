@@ -55,7 +55,9 @@ class BottyMcBotFace(object):
 
     def set_pid_tuning(self, kp, ki, kd):
         self.pitch_pid = PID(kp / 1000000, ki / 1000000, kd / 1000000)
+        # self.pitch_pid.output_limits = (-0.015, 0.015)
         self.yaw_pid = PID(kp / 1000000, ki / 1000000, kd / 1000000)
+        # self.yaw_pid.output_limits = (-0.015, 0.015)
 
     def reset_pid(self):
         self.pitch_pid.reset()
